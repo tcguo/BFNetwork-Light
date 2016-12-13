@@ -12,4 +12,5 @@
 
 - (void)requestData;
 
+- (void)requestMoreData;
 @end

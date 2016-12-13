@@ -50,4 +50,49 @@
 
 #pragma mark - NSURLSessionDelegate
 
+// https证书检验和 match host in  white list
+
+#ifndef DEBUG
+- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task
+didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge
+ completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition disposition, NSURLCredential * __nullable credential))completionHandler {
+    NSURLProtectionSpace *protectionSpace = challenge.protectionSpace;
+    SecTrustRef serverTrust = protectionSpace.serverTrust;
+    __block NSURLCredential *credential = nil;
+    BOOL trust =  [[AppStatus sharedManager] matchHost:challenge.protectionSpace.host isWebView:NO];
+    if (!trust) {
+        if (completionHandler) {
+            completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, nil);
+        }
+        return;
+    }
+    
+    NSURLSessionAuthChallengeDisposition disposition = NSURLSessionAuthChallengePerformDefaultHandling;
+    if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
+        if (BFServerTrustIsValid(serverTrust)) {
+            disposition = NSURLSessionAuthChallengeUseCredential;
+            credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
+        } else {
+            disposition = NSURLSessionAuthChallengeRejectProtectionSpace;
+        }
+    } else {
+        disposition = NSURLSessionAuthChallengeCancelAuthenticationChallenge;
+    }
+    if (completionHandler) {
+        completionHandler(disposition, credential);
+    }
+}
+
+
+static BOOL BFServerTrustIsValid(SecTrustRef serverTrust) {
+    BOOL isValid = NO;
+    SecTrustResultType result;
+    __Require_noErr_Quiet(SecTrustEvaluate(serverTrust, &result), _out);
+    isValid = (result == kSecTrustResultUnspecified || result == kSecTrustResultProceed);
+    
+_out:
+    return isValid;
+}
+#endif
+
 @end

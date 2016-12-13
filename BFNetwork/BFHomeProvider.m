@@ -35,6 +35,10 @@
     }];
 }
 
+- (void)requestMoreData {
+    
+}
+
 - (BFBaseDataRequest *)homeDataRequest {
     if (!_homeDataRequest) {
         _homeDataRequest = [[BFBaseDataRequest alloc] init];
