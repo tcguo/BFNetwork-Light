@@ -1,8 +1,11 @@
 # BFNetwork-Light
 a light network library based on NSNSURLSession
 it contains only three classes:
+
 **BFNetworkTask**
+
 **BFNetworkTaskQueue**
+
 **BFNetworkSessionManager**
 
 # BFBaseDataRequest
