@@ -7,12 +7,11 @@
 //
 
 #import "BFNetworkTaskQueue.h"
-#import <os/lock.h>
-
+#import <libkern/OSSpinLockDeprecated.h>
 @interface BFNetworkTaskQueue ()
 {
     NSMutableArray *_colletion;
-    os_unfair_lock_t _unfairLock;
+    dispatch_semaphore_t _semaphore_t;
 }
 
 @end
@@ -32,24 +31,24 @@
     self = [super init];
     if (self) {
         _colletion = [[NSMutableArray alloc] init];
-        _unfairLock = &(OS_UNFAIR_LOCK_INIT);
+        _semaphore_t = dispatch_semaphore_create(1);
     }
     return self;
 }
 
 
 - (void)addTask:(BFNetworkTask *)task {
-    os_unfair_lock_lock(_unfairLock);
+    dispatch_semaphore_wait(_semaphore_t, DISPATCH_TIME_NOW);
     [_colletion addObject:task];
-    os_unfair_lock_unlock(_unfairLock);
+    dispatch_semaphore_signal(_semaphore_t);
 }
 
 - (void)removeTask:(BFNetworkTask *)task {
-    os_unfair_lock_lock(_unfairLock);
+   dispatch_semaphore_wait(_semaphore_t, DISPATCH_TIME_NOW);
     if ([_colletion containsObject:task]) {
         [_colletion removeObject:task];
     }
-    os_unfair_lock_lock(_unfairLock);
+    dispatch_semaphore_signal(_semaphore_t);
 }
 
 #pragma mark - Public
